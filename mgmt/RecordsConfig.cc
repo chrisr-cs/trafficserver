@@ -1356,6 +1356,13 @@ static const RecordElement RecordsConfig[] =
   // Controls for TLS ASYN_JOBS and engine loading
   {RECT_CONFIG, "proxy.config.ssl.async.handshake.enabled", RECD_INT, "0", RECU_RESTART_TS, RR_NULL, RECC_NULL, "[0-1]", RECA_NULL},
   {RECT_CONFIG, "proxy.config.ssl.engine.conf_file", RECD_STRING, nullptr, RECU_NULL, RR_NULL, RECC_NULL, nullptr, RECA_NULL},
+  
+  //###########
+  //#
+  //# Enable FTP protocol
+  //#
+  //###########
+  {RECT_CONFIG, "proxy.config.ftp_enabled", RECD_INT, "0", RECU_DYNAMIC, RR_NULL, RECC_INT, "[0-1]", RECA_NULL},
 };
 // clang-format on
 
