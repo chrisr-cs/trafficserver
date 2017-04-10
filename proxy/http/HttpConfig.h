@@ -866,6 +866,7 @@ public:
   MgmtInt body_factory_response_max_size = 8192;
 
   MgmtByte forward_proxy_ftp_enabled = 0;
+
   // noncopyable
   /////////////////////////////////////
   // operator = and copy constructor //
