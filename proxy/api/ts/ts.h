@@ -1724,6 +1724,13 @@ tsapi void TSVConnClose(TSVConn connp);
 tsapi void TSVConnAbort(TSVConn connp, int error);
 tsapi void TSVConnShutdown(TSVConn connp, int read, int write);
 
+/**
+ * Gets the file descriptor used by the given TSVConn.
+ *
+ * Note: this assumes that connp is actually a NetVConnection object.
+ */
+tsapi TSReturnCode TSVConnFdGet(TSVConn connp, int *fdp);
+
 /* --------------------------------------------------------------------------
    Cache VConnections */
 tsapi int64_t TSVConnCacheObjectSizeGet(TSVConn connp);

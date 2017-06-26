@@ -6735,6 +6735,16 @@ TSVConnShutdown(TSVConn connp, int read, int write)
   }
 }
 
+TSReturnCode
+TSVConnFdGet(TSVConn connp, int *fdp)
+{
+  sdk_assert(sdk_sanity_check_iocore_structure(connp) == TS_SUCCESS);
+  *fdp = -1;
+  NetVConnection *vc = reinterpret_cast<NetVConnection*>(connp);
+  *fdp = vc->get_socket();
+  return TS_SUCCESS;
+}
+
 int64_t
 TSVConnCacheObjectSizeGet(TSVConn connp)
 {
