@@ -285,6 +285,19 @@ private:
 
 extern inkcoreapi Diags *diags;
 
+#define DiagsPrintV(level, fmt, ap)                \
+  do {                                             \
+    SourceLocation loc = MakeSourceLocation();     \
+    diags->print_va(nullptr, level, &loc, fmt, ap); \
+  } while (0)
+
+#define DiagsPrint(level, fmt, ...)                \
+  do {                                             \
+    SourceLocation loc = MakeSourceLocation();     \
+    diags->print(nullptr, level, &loc, fmt, ##__VA_ARGS__); \
+  } while (0)
+
+
 #define DiagsError(level, fmt, ...)                \
   do {                                             \
     SourceLocation loc = MakeSourceLocation();     \

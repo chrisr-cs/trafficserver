@@ -25,9 +25,39 @@
 #include "ts/ink_platform.h"
 #include "ts/ink_error.h"
 #include "ts/ink_stack_trace.h"
+#include "ts/Diags.h"
 
 #include <syslog.h>
 #include <csignal> /* MAGIC_EDITING_TAG */
+
+/**
+  This routine logs to syslog using the level passed in
+*/
+static void
+diag_print_with_level(DiagsLevel level, const char *fmt, va_list ap)
+{
+  va_list tmp;
+  va_copy(tmp, ap);
+  DiagsPrintV(level, fmt, tmp);
+  va_end(tmp);
+}
+
+/**
+  This routine prints to stderr the passed formatted message prefixed by the passed header
+*/
+static void
+print_va_hdr(const char *hdr, const char *fmt, va_list ap)
+{
+  char msg[1024];
+
+  const size_t len = strlen(hdr);
+
+  strncpy(msg, hdr, sizeof(msg));
+  vsnprintf(msg + len, sizeof(msg) - len, fmt, ap);
+  msg[sizeof(msg) - 1] = 0;
+
+  fprintf(stderr, "%s\n", msg);
+}
 
 /**
   This routine prints/logs an error message given the printf format
@@ -37,15 +67,9 @@
 static void
 fatal_va(const char *hdr, const char *fmt, va_list ap)
 {
-  char msg[1024];
-  const size_t len = strlen(hdr);
+  diag_print_with_level(DL_Fatal, fmt, ap);
 
-  strncpy(msg, hdr, sizeof(msg));
-  vsnprintf(msg + len, sizeof(msg) - len, fmt, ap);
-  msg[sizeof(msg) - 1] = 0;
-
-  fprintf(stderr, "%s\n", msg);
-  syslog(LOG_CRIT, "%s", msg);
+  print_va_hdr(hdr, fmt, ap);
 }
 
 void
@@ -67,10 +91,18 @@ ink_fatal(const char *message_format, ...)
   ::exit(70); // 70 corresponds to EX_SOFTWARE in BSD's sysexits. As good a status as any.
 }
 
+static void
+emergency_va(const char *hdr, const char *fmt, va_list ap)
+{
+  diag_print_with_level(DL_Emergency, fmt, ap);
+
+  print_va_hdr(hdr, fmt, ap);
+}
+
 void
 ink_emergency_va(const char *fmt, va_list ap)
 {
-  fatal_va("Emergency: ", fmt, ap);
+  emergency_va("Emergency: ", fmt, ap);
   ::exit(UNRECOVERABLE_EXIT);
 }
 
@@ -109,13 +141,16 @@ ink_warning(const char *message_format, ...)
 {
   va_list ap;
   char extended_format[4096], message[4096];
+
   va_start(ap, message_format);
-  snprintf(extended_format, sizeof(extended_format), "WARNING: %s", message_format);
+
+  diag_print_with_level(DL_Warning, message_format, ap);
+
+  snprintf(extended_format, sizeof(extended_format) - 1, "WARNING: %s", message_format);
   extended_format[sizeof(extended_format) - 1] = 0;
   vsnprintf(message, sizeof(message), extended_format, ap);
   message[sizeof(message) - 1] = 0;
   fprintf(stderr, "%s\n", message);
-  syslog(LOG_WARNING, "%s", message);
   va_end(ap);
 }
 
@@ -140,7 +175,7 @@ ink_pwarning(const char *message_format, ...)
   vsnprintf(message, sizeof(message), extended_format, ap);
   message[sizeof(message) - 1] = 0;
   fprintf(stderr, "%s\n", message);
-  syslog(LOG_WARNING, "%s", message);
+  DiagsPrint(DL_Warning, message);
   va_end(ap);
 }
 
@@ -155,12 +190,14 @@ ink_notice(const char *message_format, ...)
   va_list ap;
   char extended_format[4096], message[4096];
   va_start(ap, message_format);
-  snprintf(extended_format, sizeof(extended_format), "NOTE: %s", message_format);
+
+  diag_print_with_level(DL_Note, message_format, ap);
+
+  snprintf(extended_format, sizeof(extended_format) - 1, "NOTE: %s", message_format);
   extended_format[sizeof(extended_format) - 1] = 0;
   vsnprintf(message, sizeof(message), extended_format, ap);
   message[sizeof(message) - 1] = 0;
   fprintf(stderr, "%s\n", message);
-  syslog(LOG_NOTICE, "%s", message);
   va_end(ap);
 }
 
@@ -192,11 +229,13 @@ ink_error(const char *message_format, ...)
   va_list ap;
   char extended_format[2048], message[4096];
   va_start(ap, message_format);
-  snprintf(extended_format, sizeof(extended_format), "ERROR: %s", message_format);
+
+  diag_print_with_level(DL_Error, message_format, ap);
+
+  snprintf(extended_format, sizeof(extended_format) - 1, "ERROR: %s", message_format);
   extended_format[sizeof(extended_format) - 1] = 0;
   vsnprintf(message, sizeof(message), extended_format, ap);
   message[sizeof(message) - 1] = 0;
   fprintf(stderr, "%s\n", message);
-  syslog(LOG_ERR, "%s", message);
   va_end(ap);
 }

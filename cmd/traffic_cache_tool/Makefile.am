@@ -33,6 +33,14 @@ traffic_cache_tool_LDADD = \
 	$(top_builddir)/lib/ts/.libs/TextView.o \
 	$(top_builddir)/lib/tsconfig/.libs/Errata.o \
 	$(top_builddir)/lib/ts/.libs/Regex.o \
+	$(top_builddir)/lib/ts/.libs/Diags.o \
+	$(top_builddir)/lib/ts/.libs/BaseLogFile.o \
+	$(top_builddir)/lib/ts/.libs/SourceLocation.o \
+	$(top_builddir)/lib/ts/.libs/ink_mutex.o \
+	$(top_builddir)/lib/ts/.libs/ink_time.o \
+	$(top_builddir)/lib/ts/.libs/ParseRules.o \
+	$(top_builddir)/lib/ts/.libs/ink_cap.o \
+	$(top_builddir)/lib/ts/.libs/ContFlags.o \
 	@OPENSSL_LIBS@ @LIBPCRE@
 
 all-am: Makefile $(PROGRAMS)
