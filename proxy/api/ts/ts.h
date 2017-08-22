@@ -2477,6 +2477,11 @@ tsapi TSReturnCode TSRemapToUrlGet(TSHttpTxn txnp, TSMLoc *urlLocp);
  */
 tsapi TSIOBufferReader TSHttpTxnPostBufferReaderGet(TSHttpTxn txnp);
 
+/*
+ * Return TSVConn associated with the session or nullptr if no connection.
+ */
+tsapi TSVConn TSHttpSsnVConnGet(TSHttpSsn ssnp);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
