@@ -24,6 +24,7 @@
 #include "ts/ink_platform.h"
 #include "ts/ink_stack_trace.h"
 #include "ts/ink_args.h"
+#include "ts/Diags.h"
 
 #include <strings.h>
 #include <cstdio>
@@ -38,6 +39,22 @@
 
 #include <execinfo.h> /* for backtrace_symbols, etc. */
 #include <csignal>
+
+void
+syslog_stack_trace(void **stack, int btl)
+{
+  Error("STACK TRACE:");
+
+  char **backtrace_array = backtrace_symbols(stack, btl);
+    
+  // syslog out all of the stack trace lines
+  for (int i = 0; i < btl; i++)
+  {
+    Error(backtrace_array[i]);
+  }
+
+  free(backtrace_array);
+}
 
 void
 ink_stack_trace_dump()
@@ -63,6 +80,8 @@ ink_stack_trace_dump()
   if ((btl = backtrace(stack, INK_STACK_TRACE_MAX_LEVELS)) > 2) {
     // dump the backtrace to stderr
     backtrace_symbols_fd(stack + 2, btl - 2, STDERR_FILENO);
+
+    syslog_stack_trace(stack + 2, btl - 2);
   }
 }
 

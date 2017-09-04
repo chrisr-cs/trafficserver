@@ -172,6 +172,9 @@ signal_format_siginfo(int signo, siginfo_t *info, const char *msg)
 
   ssize_t ignored = write(STDERR_FILENO, buf, strlen(buf));
   (void)ignored; // because gcc and glibc are stupid, "(void)write(...)" doesn't suffice.
+
+  // output message to syslog
+  Error(buf);
 }
 
 void
