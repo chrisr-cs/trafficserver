@@ -236,6 +236,15 @@ public:
         }
       }
       break;
+    case HANDSHAKE_HOOKS_CONNECT_RECEIVED:
+    	if (eventId == TS_EVENT_VCONN_PRE_ACCEPT) {
+    	  retval = true;
+	} else if (eventId == TS_EVENT_SSL_SERVERNAME) {
+	  if (curHook) {
+	    retval = true;
+	  }
+	}
+      break;
     case HANDSHAKE_HOOKS_SNI:
       if (eventId == TS_EVENT_VCONN_START) {
         retval = true;
@@ -318,9 +327,31 @@ public:
   SSLNetVConnection(const SSLNetVConnection &) = delete;
   SSLNetVConnection &operator=(const SSLNetVConnection &) = delete;
 
+  bool receivedConnect() {
+    // CONNECT has been received and is complete
+    // (but might not have been fully handled yet).
+    return connectParseComplete;
+  }
+
+  HTTPHdr *getConnect() {
+    return &connectMessage;
+  }
+
+  HTTPHdr *getConnectResponse() {
+    return &connectResponse;
+  }
+
+  void setConnectResponseBody(char *body, int64_t length) {
+    connectResponseBody = body;
+    connectResponseBodyLength = length;
+  }
+
 private:
   ts::string_view map_tls_protocol_to_tag(const char *proto_string) const;
   bool update_rbio(bool move_to_socket);
+  int handleConnect();
+  void prepareConnectBuffer();
+  void sendConnectResponse();
 
   bool sslHandShakeComplete        = false;
   bool sslClientRenegotiationAbort = false;
@@ -329,6 +360,11 @@ private:
   IOBufferReader *handShakeHolder  = nullptr;
   IOBufferReader *handShakeReader  = nullptr;
   int handShakeBioStored           = 0;
+
+  bool connectReceived             = false;
+  bool connectParseBegun           = false;
+  bool connectParseComplete        = false;
+  bool connectHandled              = false;
 
   bool transparentPassThrough = false;
 
@@ -339,6 +375,7 @@ private:
   enum SSLHandshakeHookState {
     HANDSHAKE_HOOKS_PRE,
     HANDSHAKE_HOOKS_PRE_INVOKE,
+    HANDSHAKE_HOOKS_CONNECT_RECEIVED,
     HANDSHAKE_HOOKS_SNI,
     HANDSHAKE_HOOKS_CERT,
     HANDSHAKE_HOOKS_CERT_INVOKE,
@@ -355,6 +392,13 @@ private:
 #ifdef SSL_MODE_ASYNC
   EventIO signalep;
 #endif
+
+  HdrHeapSDKHandle *connectMessageHdrHeap = nullptr;
+  HTTPHdr connectMessage;
+  HdrHeapSDKHandle *connectResponseHdrHeap = nullptr;
+  HTTPHdr connectResponse;
+  char *connectResponseBody = nullptr;
+  int64_t connectResponseBodyLength = 0;
 };
 
 typedef int (SSLNetVConnection::*SSLNetVConnHandler)(int, void *);
