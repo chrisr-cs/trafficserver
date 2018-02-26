@@ -269,6 +269,44 @@ do_stop()
     return "$RETVAL"
 }
 
+#
+# RedHat/Fedora:  Prevents the OK FAILED status being shown for script requiring just status code
+#
+silent_kill_proc()
+{
+killproc -p $1 $2 > /dev/null
+return $?
+}
+
+#
+# RedHat/Fedora::Wrapper for killproc command with retry. Retries 5 times.
+#
+redhat_killproc_with_retry()
+{
+NAME=$1
+PIDFILE=$2
+DAEMON=$3
+local rc
+action "Stopping ${NAME}:" silent_kill_proc $PIDFILE $DAEMON
+rc="$?"
+declare -i count=0 
+while [ "$rc" != 0 ] && ((${count} < 250)); do  
+    count=${count}+1
+    # Retry 
+    # after 20 seconds - resort to kill 
+    if [ ${count} -gt 19 -a $(($count % 5)) -eq 0 ]; then
+       action "Stopping ${NAME}:" silent_kill_proc $PIDFILE $DAEMON
+       rc="$?"
+       if [ "$rc" = 7 ]; then
+           # Process died before kill retried, success.
+           rc=0
+       fi
+    fi
+    sleep 1
+done
+return "$rc"
+}
+
 # main
 case "$1" in
     start)
@@ -314,9 +352,9 @@ case "$1" in
             test "x$VERBOSE" != "xno" && log_end_msg "$retval"
             exit "$retval"
         elif [ "$DISTRIB_ID" = "fedora" -o "$DISTRIB_ID" = "redhat" ]; then
-            action "Stopping ${TC_NAME}:" killproc -p $TC_PIDFILE -d 35 $TC_DAEMON
-            action "Stopping ${TM_NAME}:" killproc -p $TM_PIDFILE -d 35 $TM_DAEMON
-            action "Stopping ${TS_NAME}:" killproc -p $TS_PIDFILE -d 35 $TS_DAEMON
+            redhat_killproc_with_retry ${TC_NAME} $TC_PIDFILE $TC_DAEMON
+            redhat_killproc_with_retry ${TM_NAME} $TM_PIDFILE $TM_DAEMON
+            redhat_killproc_with_retry ${TS_NAME} $TS_PIDFILE $TS_DAEMON
         elif [ "$DISTRIB_ID" = "gentoo" ]; then
 	    ebegin "Starting ${TS_PACKAGE_NAME}"
 	    do_stop
