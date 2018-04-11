@@ -66,6 +66,34 @@ verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
   netvc = SSLNetVCAccess(ssl);
 
   if (netvc != nullptr) {
+
+	// CDR TODO - experimental code
+	// set the context on the SSL object so that the plugin hook can read the certificate
+	// example plugin code:
+	// X509_STORE_CTX *storeCtx = (X509_STORE_CTX*) SSL_get_ex_data(ssl,99);
+	// auto *cert  = X509_STORE_CTX_get_current_cert(storeCtx);
+	// X509_NAME_oneline(X509_get_subject_name(cert), buffer, sizeof(buffer));
+	SSL_set_ex_data(ssl,99,ctx);
+
+
+    netvc->callHooks(TS_EVENT_SSL_SERVER_VERIFY_HOOK);
+
+
+    // CDR TODO - experimental code
+    // get the failure result from the plugin
+    // example plugin code to set this:
+    // SSL_set_ex_data(ssl,100,(void*) 1);
+    void* failedVoid = SSL_get_ex_data(ssl,100);
+    if (failedVoid)
+    {
+    	int failed = (uintptr_t) failedVoid;
+    	if (failed)
+    	{
+    		return 0;
+    	}
+    }
+
+
     // Match SNI if present
     if (netvc->options.sni_servername) {
       char *matched_name = nullptr;

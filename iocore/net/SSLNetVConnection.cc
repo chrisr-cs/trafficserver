@@ -1661,7 +1661,7 @@ bool
 SSLNetVConnection::callHooks(TSEvent eventId)
 {
   // Only dealing with the SNI/CERT hook so far.
-  ink_assert(eventId == TS_EVENT_SSL_CERT || eventId == TS_EVENT_SSL_SERVERNAME);
+  ink_assert(eventId == TS_EVENT_SSL_CERT || eventId == TS_EVENT_SSL_SERVERNAME || eventId == TS_EVENT_SSL_SERVER_VERIFY_HOOK);
   Debug("ssl", "callHooks sslHandshakeHookState=%d", this->sslHandshakeHookState);
 
   // Move state if it is appropriate
@@ -1669,7 +1669,7 @@ SSLNetVConnection::callHooks(TSEvent eventId)
   case HANDSHAKE_HOOKS_PRE:
     if (eventId == TS_EVENT_SSL_SERVERNAME) {
       this->sslHandshakeHookState = HANDSHAKE_HOOKS_SNI;
-    } else if (eventId == TS_EVENT_SSL_CERT) {
+    } else if (eventId == TS_EVENT_SSL_CERT || eventId == TS_EVENT_SSL_SERVER_VERIFY_HOOK) {
       this->sslHandshakeHookState = HANDSHAKE_HOOKS_CERT;
     }
     break;
@@ -1690,16 +1690,29 @@ SSLNetVConnection::callHooks(TSEvent eventId)
     } else {
       curHook = curHook->next();
     }
+
     if (!curHook) {
       this->sslHandshakeHookState = HANDSHAKE_HOOKS_CERT;
     }
     break;
   case HANDSHAKE_HOOKS_CERT:
   case HANDSHAKE_HOOKS_CERT_INVOKE:
-    if (!curHook) {
-      curHook = ssl_hooks->get(TS_SSL_CERT_INTERNAL_HOOK);
-    } else {
-      curHook = curHook->next();
+    if (!curHook)
+    {
+      if (eventId == TS_EVENT_SSL_SERVER_VERIFY_HOOK)
+      {
+    	  curHook = ssl_hooks->get(TS_SSL_SERVER_VERIFY_INTERNAL_HOOK);
+      }
+
+      if (!curHook)
+      {
+    	  curHook = ssl_hooks->get(TS_SSL_CERT_INTERNAL_HOOK);
+      }
+
+      if (!curHook)
+      {
+          curHook = curHook->next();
+      }
     }
     if (curHook == nullptr) {
       this->sslHandshakeHookState = HANDSHAKE_HOOKS_DONE;
@@ -1710,7 +1723,6 @@ SSLNetVConnection::callHooks(TSEvent eventId)
   default:
     curHook                     = nullptr;
     this->sslHandshakeHookState = HANDSHAKE_HOOKS_DONE;
-    return true;
   }
 
   Debug("ssl", "callHooks iterated to curHook=%p", curHook);
