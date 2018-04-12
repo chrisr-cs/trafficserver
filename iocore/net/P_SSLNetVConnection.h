@@ -325,6 +325,14 @@ public:
     connectResponseBodyLength = length;
   }
 
+  void setSslServerCheckFailed(bool failed) {
+    sslServerCheckFailed = failed;
+  }
+
+  bool getSslServerCheckFailed() {
+	  return sslServerCheckFailed;
+  }
+
 private:
   SSLNetVConnection(const SSLNetVConnection &);
   SSLNetVConnection &operator=(const SSLNetVConnection &);
@@ -374,6 +382,8 @@ private:
   HTTPHdr connectResponse;
   char *connectResponseBody = nullptr;
   int64_t connectResponseBodyLength = 0;
+
+  bool sslServerCheckFailed = false;
 };
 
 typedef int (SSLNetVConnection::*SSLNetVConnHandler)(int, void *);

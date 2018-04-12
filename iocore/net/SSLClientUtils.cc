@@ -66,6 +66,13 @@ verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
   netvc = SSLNetVCAccess(ssl);
 
   if (netvc != nullptr) {
+
+	netvc->callHooks(TS_EVENT_SSL_SERVER_CHECK);
+
+	if (netvc->getSslServerCheckFailed()) {
+      return 0;
+	}
+
     // Match SNI if present
     if (netvc->options.sni_servername) {
       char *matched_name = nullptr;

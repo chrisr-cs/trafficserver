@@ -9598,3 +9598,13 @@ void TSVConnConnectResponseBodySet(TSVConn vconn, const char *body, int64_t leng
 
     ssl_vc->setConnectResponseBody(const_cast<char *>(body), length);
 }
+
+void
+TSVConnSSLSetServerCheckFailed(TSVConn sslp, bool failed)
+{
+  NetVConnection *vc        = reinterpret_cast<NetVConnection *>(sslp);
+  SSLNetVConnection *ssl_vc = dynamic_cast<SSLNetVConnection *>(vc);
+  if (ssl_vc != nullptr) {
+    ssl_vc->setSslServerCheckFailed(failed);
+  }
+}

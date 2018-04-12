@@ -2451,6 +2451,8 @@ tsapi TSReturnCode TSVConnConnectGet(TSVConn vconn, TSMBuffer *bufp, TSMLoc *loc
 tsapi TSReturnCode TSVConnConnectResponseGet(TSVConn vconn, TSMBuffer *bufp, TSMLoc *loc);
 tsapi void TSVConnConnectResponseBodySet(TSVConn vconn, const char *body, int64_t length);
 
+tsapi void TSVConnSSLSetServerCheckFailed(TSVConn sslp, bool failed);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
